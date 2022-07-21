@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donut</title>
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"
+    ></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.138.3/build/three.module.js"
+        }
+      }
+    </script>
+    <style>
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      #signature {
+        position: fixed;
+        right: 7.5%;
+        bottom: 7.5%;
+      }
+      img {
+        height: 75px;
+      }
+      #colorChange {
+        position: fixed;
+        bottom: 25%;
+        right: 7.5%;
+        width: 30px;
+        height: 70px;
+        padding-bottom: 2px;
+      }
+      .button {
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 50%;
+        cursor: pointer;
+      }
+      .button:hover {
+        opacity: 0.8;
+      }
+
+      #pinkButton {
+        background-color: #ffbbc5;
+        margin-bottom: 2px;
+      }
+      #chocolateButton {
+        background-color: #342211;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="background"></canvas>
+    <div id="colorChange">
+      <div class="button" id="pinkButton"></div>
+      <div class="button" id="chocolateButton"></div>
+    </div>
+    <div id="signature"><img src="images/signature.png" alt="" /></div>
+    <script type="module">
+      "use strict";
+      import * as THREE from "three";
+      import { GLTFLoader } from "../node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+      // import { OrbitControls } from "../node_modules/three/examples/jsm/controls/OrbitControls.js";
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector("#background"),
+      });
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xffffff, 0);
+      camera.position.set(0, 0, 1);
+
+      renderer.render(scene, camera);
+
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
+      hemiLight.position.set(20, 20);
+      scene.add(hemiLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(-3, 10, -10);
+      scene.add(dirLight);
+      const ambLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambLight);
+
+      var donut;
+      var flavour = "pink";
+
+      const pinkButton = document.getElementById("pinkButton");
+      const chocolateButton = document.getElementById("chocolateButton");
+
+      pinkButton.addEventListener("click", flavourPink);
+      chocolateButton.addEventListener("click", flavourChocolate);
+
+      window.addEventListener("resize", onWindowResize, false);
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function flavourPink() {
+        if (flavour === "pink") {
+          return;
+        }
+        flavour = "pink";
+        loadObject();
+      }
+
+      function flavourChocolate() {
+        if (flavour === "chocolate") {
+          return;
+        }
+        flavour = "chocolate";
+        loadObject();
+      }
+
+      function loadObject() {
+        const loader = new GLTFLoader();
+        var fileName = "";
+        if (flavour === "pink") {
+          fileName = "./blenderModels/donutPink.glb";
+        } else {
+          fileName = "./blenderModels/donutChocolate.glb";
+        }
+        console.log(scene.children);
+        loader.load(
+          fileName,
+          function (gltf) {
+            scene.remove(donut);
+            donut = gltf.scene;
+            scaleDonut(donut);
+            scene.add(donut);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          }
+        );
+      }
+
+      function scaleDonut(donut) {
+        if (window.innerWidth < 400) {
+          donut.scale.multiplyScalar(0.7);
+        } else if (window.innerWidth < 650) {
+          donut.scale.multiplyScalar(0.85);
+        } else {
+          donut.scale.multiplyScalar(1);
+        }
+        return donut;
+      }
+
+      loadObject();
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        if (flavour === "pink") {
+          donut.rotation.x -= 0.01;
+          donut.rotation.y -= 0.06;
+          donut.rotation.z -= 0.01;
+        } else {
+          donut.rotation.x += 0.01;
+          donut.rotation.y += 0.06;
+          donut.rotation.z += 0.01;
+        }
+      }
+      setTimeout(() => animate(), 100);
+    </script>
+  </body>
+</html>
